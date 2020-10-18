@@ -1,3 +1,4 @@
+import argparse
 from typing import List, Tuple
 
 from pandas import DataFrame
@@ -196,4 +197,14 @@ def calc(table_type: str, start_level: int, goal_level: int, max_soul_count: int
 
 
 if __name__ == '__main__':
-    calc('R', 10, 20, 10)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-t', '--type', help='萌具の種類を指定します(R or SR or SSR)', default='R')
+    parser.add_argument('-f', '--first', help='開始時の萌具のレベルを指定します(自然数)', type=int,
+                        default=1)
+    parser.add_argument('-l', '--last', help='目標とする萌具のレベルを指定します(自然数)', type=int,
+                        default=10)
+    parser.add_argument('-s', '--soul', help='使用していいシラズのまもり魂の総数を指定します(0以上の整数)', type=int,
+                        default=0)
+
+    args = parser.parse_args()
+    calc(args.type, args.first, args.last, args.soul)
