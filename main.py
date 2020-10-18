@@ -1,7 +1,5 @@
-from itertools import product
 from typing import List, Tuple
 
-import pandas as pandas
 from pandas import DataFrame
 from pulp import *
 
@@ -28,24 +26,91 @@ table_r = [
     (5, 13)
 ]
 
+table_sr = [
+    (1, 100),
+    (1, 100),
+    (1, 98),
+    (1, 95),
+    (2, 90),
+    (2, 84),
+    (2, 76),
+    (2, 67),
+    (2, 58),
+    (3, 50),
+    (3, 42),
+    (3, 36),
+    (3, 30),
+    (3, 25),
+    (4, 21),
+    (4, 18),
+    (4, 15),
+    (4, 13),
+    (4, 12),
+    (5, 10),
+    (5, 9),
+    (5, 8),
+    (5, 8),
+    (5, 7)
+]
 
-def calc(table: List[Tuple[int, int]], start_level: int, goal_level: int, max_soul_count: int) -> None:
+
+table_ssr = [
+    (1, 100),
+    (1, 100),
+    (1, 99),
+    (1, 98),
+    (1, 95),
+    (2, 92),
+    (2, 87),
+    (2, 81),
+    (2, 74),
+    (2, 67),
+    (2, 60),
+    (3, 53),
+    (3, 46),
+    (3, 39),
+    (3, 34),
+    (3, 29),
+    (3, 24),
+    (4, 20),
+    (4, 17),
+    (4, 14),
+    (4, 12),
+    (4, 10),
+    (4, 8),
+    (5, 7),
+    (5, 6),
+    (5, 5),
+    (5, 4),
+    (5, 3),
+    (5, 3)
+]
+
+
+def calc(table_type: str, start_level: int, goal_level: int, max_soul_count: int) -> None:
     """最適解を計算して出力する
 
-    :param table:素材数・成功率のテーブル
+    :param table_type:素材数・成功率のテーブルの種類
     :param start_level:開始レベル
     :param goal_level:目標レベル
     :param max_soul_count:使用できるシラズのまもり魂の下図
     """
 
+    if table_type == 'R':
+        table: List[Tuple[int, int]] = table_r
+    elif table_type == 'SR':
+        table = table_sr
+    else:
+        table = table_ssr
+
     # 入力チェック
     if start_level >= goal_level:
-        print('【計算結果】')
-        print('強化の必要なし.')
+        print(f'レベル{start_level}からレベル{goal_level}まで、まもり魂を{max_soul_count}個使う場合の分析結果：')
+        print('・強化の必要なし')
         return
 
     # 期待値テーブル(シラズの精花、シラズのまもり魂)を算出する
-    data_df = DataFrame.from_records(table_r)
+    data_df = DataFrame.from_records(table)
     data_df.columns = ['flower_count', 'percent']
 
     problem_df = DataFrame()
@@ -90,14 +155,13 @@ def calc(table: List[Tuple[int, int]], start_level: int, goal_level: int, max_so
     problem_model += lpDot(problem_df['Var'], problem_df['soul_exp']) <= max_soul_count
 
     # 解く
-    print('-' * 80)
-    problem_model.solve()
-    print('-' * 80)
+    problem_model.solve(pulp.PULP_CBC_CMD(msg=False))
 
     # 結果を表示
-    print(f'レベル{start_level}からレベル{goal_level}まで、まもり魂を{max_soul_count}個使う場合の分析結果：')
-    print(f'・精花使用回数の期待値は、{round(value(problem_model.objective) * 10) / 10.0}個)')
+    print(f'{table_type}萌具を、レベル{start_level}からレベル{goal_level}まで、'
+          f'まもり魂を{max_soul_count}個使う場合の分析結果：')
     if problem_model.status == LpStatusOptimal:
+        print(f'・精花使用回数の期待値は、{round(value(problem_model.objective) * 10) / 10.0}個')
         problem_df['Val'] = problem_df['Var'].apply(value)
         for level in range(0, len(data_df)):
             index_1 = level * (max_soul_count + 1)
@@ -105,15 +169,18 @@ def calc(table: List[Tuple[int, int]], start_level: int, goal_level: int, max_so
             sliced_value = problem_df['Val'][index_1: index_2].values
             for soul_count in range(0, max_soul_count + 1):
                 if sliced_value[soul_count] > 0 and soul_count > 0:
-                    percent = min(table_r[level][1] + soul_count * 5, 100)
-                    print(f'・レベル{level + 1} では まもり魂を1回あたり{soul_count}個使用、成功率は{percent}％')
+                    percent = min(table[level][1] + soul_count * 5, 100)
+                    print(f'・レベル{level + 1} では まもり魂を1回あたり{soul_count}個使用 (成功率は{percent}％)')
                     break
     else:
         print('解けませんでした')
+    print('-' * 80)
 
 
 if __name__ == '__main__':
-    # print(calc(table_r, 1, 15, 0))
-    # calc(table_r, 1, 15, 100)
-    print(calc(table_r, 1, 20, 20))
-    print(calc(table_r, 1, 20, 100))
+    calc('R', 1, 15, 0)
+    calc('R', 1, 15, 20)
+    calc('SR', 1, 10, 0)
+    calc('SR', 1, 10, 20)
+    calc('SR', 1, 25, 100)
+    calc('SSR', 1, 10, 10)
