@@ -96,17 +96,35 @@ def calc(table_type: str, start_level: int, goal_level: int, max_soul_count: int
     :param max_soul_count:使用できるシラズのまもり魂の下図
     """
 
+    # 入力チェック
+    table = []
     if table_type == 'R':
         table: List[Tuple[int, int]] = table_r
     elif table_type == 'SR':
         table = table_sr
-    else:
+    elif table_type == 'SSR':
         table = table_ssr
+    else:
+        print('エラー：萌具の種類は、R・SR・SSRのどれかを指定してください')
+        return
 
-    # 入力チェック
+    if start_level < 1:
+        print('エラー：開始レベルには正の整数を指定してください')
+        return
+    if start_level == len(table) + 1:
+        print('エラー：これ以上レベルは上がりません')
+        return
     if start_level >= goal_level:
-        print(f'レベル{start_level}からレベル{goal_level}まで、まもり魂を{max_soul_count}個使う場合の分析結果：')
-        print('・強化の必要なし')
+        print('エラー：目標レベルは開始レベルより大きい数字を指定してください')
+        return
+    if start_level > len(table) + 1:
+        print('エラー：開始レベルが高すぎます')
+        return
+    if goal_level > len(table) + 1:
+        print('エラー：目標レベルが高すぎます')
+        return
+    if max_soul_count < 0:
+        print('エラー：シラズのまもり魂の個数には正の整数を指定してください')
         return
 
     # 期待値テーブル(シラズの精花、シラズのまもり魂)を算出する
@@ -178,9 +196,4 @@ def calc(table_type: str, start_level: int, goal_level: int, max_soul_count: int
 
 
 if __name__ == '__main__':
-    calc('R', 1, 15, 0)
-    calc('R', 1, 15, 20)
-    calc('SR', 1, 10, 0)
-    calc('SR', 1, 10, 20)
-    calc('SR', 1, 25, 100)
-    calc('SSR', 1, 10, 10)
+    calc('R', 10, 20, 10)
